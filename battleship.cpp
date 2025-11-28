@@ -254,7 +254,11 @@ void boatPictures(vector <string> &boatImages, vector <string> positions, vector
 
     for (int i=0; i<positions.size(); i++){
         //setting the positions
-        if (positions[i]!="NB"&&positions[i]!="Z20"){
+        if (positions[i]!="Z20"){
+            if (positions[i]==""){
+                //break
+                cout<<"Error";
+            }
             settingCoords(positions[i], letterCoord, numberCoord);
             boatImages[(numberCoord)*10-10+letterCoord-'A']=shape;
         }
@@ -414,32 +418,29 @@ void computerSmart(vector <string> possibles, vector <string> placesShot, hits &
 
     //if previous was a hit (=second hit)
     } else //if (pastHits.previous)
-    {
-        do {
-            pastHits.direction;
-            swapped=false;
-            //swapping direction if they miss
-            if (isInString(placesShot, possibleNextBoatSpots[pastHits.direction])&&!swapped){
-                shot=possibleNextBoatSpots[pastHits.direction];
-                swapped=true;
-                //possibleNextBoatSpots=possibleInitialBoatSpots;
-                if (pastHits.direction==0){
-                    pastHits.direction=3;
-                } else if (pastHits.direction==1){
-                    pastHits.direction=2;
-                } else if (pastHits.direction==2){
-                    pastHits.direction=1;
-                } else if (pastHits.direction==3){
-                    pastHits.direction=0;
-                }
-            } else if (!swapped&&possibleNextBoatSpots[pastHits.direction]!="Z20"){
-                shot=possibleNextBoatSpots[pastHits.direction];
-            } else {
-                shot=possibleInitialBoatSpots[pastHits.direction];
-                continuing=true;
+    {   //swapping direction if they miss
+        if (!pastHits.previous){
+            swapped=true;
+            //possibleNextBoatSpots=possibleInitialBoatSpots;
+            if (pastHits.direction==0){
+                pastHits.direction=3;
+            } else if (pastHits.direction==1){
+                pastHits.direction=2;
+            } else if (pastHits.direction==2){
+                pastHits.direction=1;
+            } else if (pastHits.direction==3){
+                pastHits.direction=0;
             }
-            //continuing if it is a miss
-        } while ((isInString(placesShot, possibleNextBoatSpots[pastHits.direction])&&swapped)||continuing);
+            shot=possibleInitialBoatSpots[pastHits.direction];
+        } else {
+            shot=possibleNextBoatSpots[pastHits.direction];
+        }
+        //error checking
+        while (shot=="Z20"){
+            shot=possibleNextBoatSpots[rand()%4];
+        }
+
+        //Showing what happened
         cout<<"    "<<shot;
         cout<<"Both were hits";
     }
@@ -462,12 +463,15 @@ string isHit(vector <string> boatPositions, vector <string> &shots, string shot,
                 boatStuff[i].timesHit+=1;
                 if (boatStuff[i].timesHit==boatStuff[i].shape){
                     cout<<" You sunk my battleship! :(";
-                    //checking if all the hits were on the sunken 
+                    pastHits.stillShooting=false;
+                    //showing that a ship has been sank
                     int boatVolume=0;
                     pastHits.shipsSank.push_back(i+2);
                     for (int j=0; j<pastHits.shipsSank.size(); j++){
                         boatVolume=pastHits.shipsSank[j];
                     }
+
+                    //checking (but it is currently broken) that the hits are equal to the size of the ship
                     if (pastHits.positionsHit.size()==boatVolume){
                         cout<<"IMPORTANT: ALL SHOT SHIPS HAVE BEEN SUNK";
                         pastHits.positionsHit.clear();
@@ -569,8 +573,8 @@ int main(){
     //getting ready
     settingUp(userShots, computerShots, userBoats, emptyBoats, computerBoatVisuals);
     board(userShots, userBoats);
-    //gettingBoatPlaces(userPositions, possibleSpots, boats, userBoats, userShots, userBoatStuff);
-    test(userPositions, possibleSpots, boats, userBoats, userShots, userBoatStuff);
+    gettingBoatPlaces(userPositions, possibleSpots, boats, userBoats, userShots, userBoatStuff);
+    //test(userPositions, possibleSpots, boats, userBoats, userShots, userBoatStuff);
     computerBoats(computerPositions, possibleSpots, boats, computerBoatVisuals, computerShots, computerBoatStuff);
     
 
