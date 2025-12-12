@@ -20,7 +20,7 @@ To play the game of battleship, you need to download and run the executable.
 3. *Executing* Run the game using the correct command for the system
 *   **Linux** 
     ```bash
-    .\battleship
+    ./battleship
     ```
 
 ## How to play

@@ -171,7 +171,7 @@ void settingCoords(string position, char &letterCoords, int &numberCoords){
 // shots is a length 100 vector containing what to cout at each posistion
 void board(vector <string> shots, vector <string> boats, hits pastHits){
     
-    cout<<"\n|------------------------------------------------------|";
+    cout<<"\n\033[0;1m|------------------------------------------------------|";
     printf("\n|    | A  | B  | C  | D  | E  | F  | G  | H  | I  | J  |");
 
     for (int i=0; i<100; i+=10){
@@ -204,12 +204,13 @@ bool spotAllowed (string position1, string position2, int boatNum, vector <strin
     bool rightDistance=false;
     if (isInString(possible2s, position2)){
         rightDistance=true;
+        if (!isInString(positions, position2)){
+            rightDistance=true;
+        } else {
+            rightDistance=false;
+        }
     } 
-    if (!isInString(positions, position2)){
-        rightDistance=true;
-    } else {
-        rightDistance=false;
-    }
+    
     
     //retuning
     return rightDistance;
@@ -366,6 +367,7 @@ void gettingBoatPlaces(vector <string> &positions, vector <int> boats, vector <s
     string position1, position2="0";
     bool works=true;
     vector <string> position2s;
+    board(shots, boatImages, pastHits);
     for (int i=0; i<4; i++){
         boatStuff.push_back(boat());
         do{
@@ -410,7 +412,7 @@ void gettingBoatPlaces(vector <string> &positions, vector <int> boats, vector <s
                 }
 
                 //second spot
-                cout<<"What is the ending coordinate for your "<<boatNum<<" boat? (enter -1 to change your starting position)";
+                cout<<"What is the ending coordinate for your "<<boatNum<<" boat? (enter -1 to change your starting position): ";
                 cin>>position2;
                 position2[0]=toupper(position2[0]);
                 //making sure it is possible
@@ -421,19 +423,18 @@ void gettingBoatPlaces(vector <string> &positions, vector <int> boats, vector <s
                 }
                 position2s=possiblePosition2(position1, boatNum, false);
                 while (!spotAllowed(position1, position2, boatNum, position2s, positions)){
-                    cout<<"That spot is not the right disatnce away from your starting position. \nYour options are: ";
+                    cout<<"\nThat spot is not the right disatnce away from your starting position. \nYour options are: ";
                     for (int j=0; j<position2s.size(); j++){
                         if (!isInString(positions, position2s[j])&&position2s[j]!="Z20"){
                             cout<<position2s[j]<<" ";
                         }
                     }
-                    cout<<"Please enter your ending position: ";
+                    cout<<"\nPlease enter your ending position: ";
                     cin>>position2;
                     position2[0]=toupper(position2[0]);
                 } 
                 //allowing to change starting position
             } while (position2=="-1");
-            
             
             //adding/checking positions
             addingPos(positions, position1, position2, boatNum, works, boatStuff[i]);
@@ -441,7 +442,8 @@ void gettingBoatPlaces(vector <string> &positions, vector <int> boats, vector <s
                 cout<<"\nSorry, your boat couldn't be in one of the places you wanted it to be. \nPlease try again.";
             }
         } while (!works);
-
+        //getting a record
+        pushToFile(position1, position2, "boatPlacements.txt");
         //getting rid of the placed boats
         boats.erase(boats.begin()+positionInInt(boats, boatNum));
         //adding images to list etc, etc
@@ -469,7 +471,7 @@ void getBoatPos(string &position1, vector <string> &positions, int boatNum, stri
     // second spot
     position2 = possible2s[rand() % possible2s.size()];
     int stop = 0;
-    while ((!spotAllowed(position1, position2, boatNum, possiblePosition2(position1, boatNum, false), positions)||position2 == "Z20")&&stop<4){
+    while ((!spotAllowed(position1, position2, boatNum, possiblePosition2(position1, boatNum, false), positions)||position2 == "Z20")&&stop<possible2s.size()){
         position2 = possible2s[stop];
         stop++;
     }
@@ -498,9 +500,9 @@ void computerBoats(vector <string> &positions, vector <int> boats, vector <strin
 
         } while (!works);
         boatPictures(boatImages, positions, "$");
-        board(shots, boatImages, pastHits);
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     }
+    board(shots, boatImages, pastHits);
 }
 
 //checking if all possible 2 boat spots are full
@@ -676,7 +678,7 @@ void reportShipSank(hits &pastHits, int shipSize){
 string isHit(vector <string> boatPositions, vector <string> &shots, string shot, vector <boat> &boatStuff, int &shipsSunk, hits &pastHits){
     shots.push_back(shot);
     if (isInString(boatPositions, shot)){
-        cout<<" HIT! ";
+        cout<<"\033[0;91mHIT!";
         pastHits.previous=true;
         pastHits.positionsHit.push_back(shot);
         pastHits.stillShooting=true;
@@ -720,7 +722,7 @@ void shooting(vector <string> &positions, vector <string> &shots, string person,
     }
     //getting shots
     if (isUser){
-        cout<<"Please enter a coordinate to shoot.";
+        cout<<"\033[0;95mPlease enter a coordinate to shoot: ";
         cin>>shot;
         shot[0]=toupper(shot[0]);
         while (!isInString(POSSIBLES, shot)){
@@ -732,6 +734,7 @@ void shooting(vector <string> &positions, vector <string> &shots, string person,
         //making the computer be smart
         if (pastHits.stillShooting==true){
             computerSmart(placesShot, pastHits, shot);
+            easy(positions, shot, order, mode);
         } else {
             //choosing where to shoot
             shot=order[rand()%50];
@@ -746,7 +749,7 @@ void shooting(vector <string> &positions, vector <string> &shots, string person,
     while (isInString(placesShot, shot)){
         if (isUser){
             do {
-                cout<<"Please enter a NEW coordinate to shoot.";
+                cout<<"Please enter a NEW coordinate to shoot: ";
                 cin>>shot;
                 shot[0]=toupper(shot[0]);
             } while (!isInString(POSSIBLES, shot));
@@ -760,11 +763,13 @@ void shooting(vector <string> &positions, vector <string> &shots, string person,
             }
         }
     }
+    //doing user stuff
     if (isUser){
-        //system("clear");
+        system("clear");
         if (mode=="hard"){
             boat2(shot, placesShot, positions, boatStuff, pastHits, boatVisuals);
         }
+        pushToFile(shot, "shots.txt");
     }
     placesShot.push_back(shot);
     //checking for errors
@@ -878,11 +883,12 @@ int preference(string name){
         cout<<"\nDo you prefer dogs, cats, or other? (if other enter 1): ";
         cin>>animal;
         lowering(animal);
-    } while (animal.find("dogs")==-1&&animal.find("cats")==-1&&animal!="0");
+    } while (animal.find("dogs")==-1&&animal.find("cats")==-1&&animal!="0"&&animal!="1");
     //getting other
     if (animal=="1"){
         cout<<"What pet do you prefer? ";
-        cin>>animal;
+        cin>>ws;
+        getline(cin,animal);
     } 
     //putting name in the right file
     if (animal=="0"){
@@ -975,6 +981,7 @@ void play(int &myWins, int &compWins, const vector <string> &order, double &avgS
         cin>>wantToPlace;
         //wantToPlace="r";
     }
+    system("clear");
     while (wantToPlace=="r"){
         userPositions.clear();
         userBoatStuff.clear();
@@ -984,11 +991,11 @@ void play(int &myWins, int &compWins, const vector <string> &order, double &avgS
         randomUserBoat(userPositions, boats, userBoats, userShots, userBoatStuff, empty);
         cout<<"\nIf you like this position enter y, otherwise enter 'r' to randoize it: ";
         cin>>wantToPlace;
+        system("clear");
         //wantToPlace="y";
     }
     if (wantToPlace=="c"){
         gettingBoatPlaces(userPositions, boats, userBoats, userShots, userBoatStuff, computerPastHits);
-
     }
     //getting the comuter boats
     computerBoats(computerPositions, boats, computerBoatVisuals, computerShots, computerBoatStuff, computerPastHits);
@@ -1003,9 +1010,8 @@ void play(int &myWins, int &compWins, const vector <string> &order, double &avgS
     }
     if (name.find("Lily")!=-1){
         mode="easy";
+        cout<<"easy";
     }
-
-
 
     //shooting
     cout<<"Board to shoot at: ";
@@ -1028,7 +1034,7 @@ void play(int &myWins, int &compWins, const vector <string> &order, double &avgS
     avgShots+=userPlacesShot.size();
     //showing the winner
     if (compBattleshipsSunk==4){
-        cout<<"\n\nYou won!";
+        cout<<"\n\nYou won!\n";
         myWins++;
         winStreak++;
     } else {
@@ -1037,15 +1043,17 @@ void play(int &myWins, int &compWins, const vector <string> &order, double &avgS
         winStreak=0;
         cout<<"\nThe computer's boats were in these positions: ";
         board(userShots, computerBoatVisuals, empty);
+        board(computerShots, userBoats, computerPastHits);
+        cout<<"\n";
     }
     usleep(5000000);
 
     //win streak
     cout<<"\nYour win streak is "<<winStreak;
 
-    cout<<"\nDo you want to play again "<<name<<"? ";
-    cin>>wantToReplay;
-    
+    //cout<<"\nDo you want to play again "<<name<<"? ";
+    //cin>>wantToReplay;
+    wantToReplay="n";
     if (tolower(wantToReplay[0])=='y'||wantToReplay=="sure"){
         playAgain=true;
     } else {
@@ -1064,7 +1072,9 @@ int main(){
     double avgShots;
     string name, survey;
     vector <string> order=getFromFile("shootingOrder.txt");
-
+    cout<<"Please enter your name: ";
+    cin>>name;
+    preference(name);
     do {
         srand(time(0));
         play(myWins, compWins, order, avgShots, playAgain, name, winStreak);
